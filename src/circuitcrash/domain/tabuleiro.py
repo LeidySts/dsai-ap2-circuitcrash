@@ -362,7 +362,7 @@ def usar_isolante(estado: EstadoPartida, jogador: int, linha: int, coluna: int) 
     estado.casas[linha][coluna] = Casa(TipoCasa.BLOQUEIO)
     estado.cartas[jogador].discard("isolante")
     estado.mensagem = "Isolante usado: a casa foi bloqueada."
-    estado.erro = False
+    _fim_do_turno(estado, "carta Isolante usada")
 
 
 def usar_curto(estado: EstadoPartida, jogador: int, linha: int, coluna: int) -> None:
@@ -386,7 +386,7 @@ def usar_curto(estado: EstadoPartida, jogador: int, linha: int, coluna: int) -> 
     estado.cartas[jogador].discard("curto")
     eventos = recalcular(estado)
     estado.mensagem = " ".join(["Curto usado: a peça foi removida.", *eventos])
-    estado.erro = False
+    _fim_do_turno(estado, "carta Curto usada.")
 
 
 def usar_ponte(estado: EstadoPartida, jogador: int, linha: int, coluna: int, direcao: str) -> None:
@@ -419,4 +419,4 @@ def usar_ponte(estado: EstadoPartida, jogador: int, linha: int, coluna: int, dir
     estado.cartas[jogador].discard("ponte")
     eventos = recalcular(estado)
     estado.mensagem = " ".join(["Ponte usada: o circuito passou por cima da peça adversária.", *eventos])
-    estado.erro = False
+    _fim_do_turno(estado, "carta Ponte usada.")
