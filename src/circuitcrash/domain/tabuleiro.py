@@ -357,3 +357,27 @@ def usar_isolante(estado: EstadoPartida, jogador: int, linha: int, coluna: int) 
     estado.cartas[jogador].discard("isolante")
     estado.mensagem = "Isolante usado: a casa foi bloqueada."
     estado.erro = False
+
+
+def usar_curto(estado: EstadoPartida, jogador: int, linha: int, coluna: int) -> None:
+    """Carta Curto: remove uma peça de adversário que não encosta numa base."""
+    estado.erro = True
+    if "curto" not in estado.cartas[jogador]:
+        estado.mensagem = "Você já usou a carta Curto."
+        return
+    if not _dentro(linha, coluna) or estado.casa(linha, coluna).tipo != TipoCasa.PECA:
+        estado.mensagem = "O Curto só pode remover uma peça."
+        return
+    if estado.casa(linha, coluna).dono == jogador:
+        estado.mensagem = "O Curto não pode remover a sua própria peça."
+        return
+    for dl, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+        vl, vc = linha + dl, coluna + dc
+        if _dentro(vl, vc) and estado.casa(vl, vc).tipo == TipoCasa.BASE:
+            estado.mensagem = "Essa peça está protegida: encosta numa base."
+            return
+    estado.casas[linha][coluna] = Casa()
+    estado.cartas[jogador].discard("curto")
+    eventos = recalcular(estado)
+    estado.mensagem = " ".join(["Curto usado: a peça foi removida.", *eventos])
+    estado.erro = False
