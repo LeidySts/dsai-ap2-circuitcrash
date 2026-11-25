@@ -90,3 +90,30 @@ def test_casa_bloqueada_pelo_isolante_nao_aceita_peca() -> None:
     t.usar_isolante(estado, 0, 2, 0)
     assert not t.jogar_na_casa(estado, 2, 0)
     assert estado.casa(2, 0).tipo == t.TipoCasa.BLOQUEIO
+
+
+def test_curto_remove_peca_de_adversario_e_gasta_a_carta() -> None:
+    estado = t.nova_partida()
+    t.usar_curto(estado, 0, 2, 5)
+    assert estado.casa(2, 5).tipo == t.TipoCasa.VAZIA
+    assert "curto" not in estado.cartas[0]
+    assert not estado.erro
+
+
+def test_curto_recusa_pecas_protegidas() -> None:
+    for linha, coluna in [(2, 2), (1, 6), (0, 6), (3, 3)]:
+        estado = t.nova_partida()
+        antes = estado.casa(linha, coluna).tipo
+        t.usar_curto(estado, 0, linha, coluna)
+        assert estado.erro
+        assert estado.casa(linha, coluna).tipo == antes
+        assert "curto" in estado.cartas[0]
+
+
+def test_curto_nao_tira_pontos_de_quem_ja_capturou() -> None:
+    estado = t.nova_partida()
+    pontos_antes = list(estado.pontos)
+    t.usar_curto(estado, 0, 2, 5)
+    assert (2, 5) not in estado.energizados
+    for antes, depois in zip(pontos_antes, estado.pontos, strict=True):
+        assert depois >= antes
