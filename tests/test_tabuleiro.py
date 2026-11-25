@@ -117,3 +117,24 @@ def test_curto_nao_tira_pontos_de_quem_ja_capturou() -> None:
     assert (2, 5) not in estado.energizados
     for antes, depois in zip(pontos_antes, estado.pontos, strict=True):
         assert depois >= antes
+
+
+def test_ponte_liga_o_circuito_por_cima_de_uma_peca_adversaria() -> None:
+    estado = t.nova_partida()
+    t._colocar(estado, 0, 3, "EW", 1)
+    t.usar_ponte(estado, 0, 0, 2, "E")
+    assert not estado.erro
+    assert estado.casa(0, 3).dono == 1
+    assert estado.casa(0, 4).tipo == t.TipoCasa.PECA
+    assert estado.casa(0, 4).dono == 0
+    assert "ponte" not in estado.cartas[0]
+    assert (0, 4) in t.circuito_do_jogador(estado, 0)[0]
+
+
+def test_ponte_recusa_jogadas_invalidas() -> None:
+    for direcao in ["E", "S"]:
+        estado = t.nova_partida()
+        t.usar_ponte(estado, 0, 0, 2, direcao)
+        assert estado.erro
+        assert "ponte" in estado.cartas[0]
+        assert not estado.pontes

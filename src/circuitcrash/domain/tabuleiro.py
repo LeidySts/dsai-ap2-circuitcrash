@@ -105,6 +105,7 @@ class EstadoPartida:
     energizados: set[tuple[int, int]] = field(default_factory=set)
     sorteio: random.Random = field(default_factory=lambda: random.Random(42))
     cartas: list[set[str]] = field(default_factory=list)
+    pontes: list[tuple[int, tuple[int, int], tuple[int, int]]] = field(default_factory=list)
 
     @property
     def terminou(self) -> bool:
@@ -198,6 +199,11 @@ def _vizinhos_conectados(estado: EstadoPartida, linha: int, coluna: int) -> list
     return resultado
 
 
+def _saltos(estado: EstadoPartida, jogador: int, pos: tuple[int, int]) -> list[tuple[int, int]]:
+    """Casas alcançadas por Pontes do jogador a partir de uma casa."""
+    return [destino for dono, origem, destino in estado.pontes if dono == jogador and origem == pos]
+
+
 def circuito_do_jogador(estado: EstadoPartida, jogador: int) -> tuple[set[tuple[int, int]], bool, set[tuple[int, int]]]:
     """Percorre o circuito a partir da base.
 
@@ -211,7 +217,7 @@ def circuito_do_jogador(estado: EstadoPartida, jogador: int) -> tuple[set[tuple[
     objetivos: set[tuple[int, int]] = set()
     while fila:
         atual = fila.pop()
-        for vizinha in _vizinhos_conectados(estado, *atual):
+        for vizinha in [*_vizinhos_conectados(estado, *atual), *_saltos(estado, jogador, atual)]:
             casa = estado.casa(*vizinha)
             if casa.tipo is TipoCasa.FONTE:
                 alcanca_fonte = True
@@ -380,4 +386,37 @@ def usar_curto(estado: EstadoPartida, jogador: int, linha: int, coluna: int) -> 
     estado.cartas[jogador].discard("curto")
     eventos = recalcular(estado)
     estado.mensagem = " ".join(["Curto usado: a peça foi removida.", *eventos])
+    estado.erro = False
+
+
+def usar_ponte(estado: EstadoPartida, jogador: int, linha: int, coluna: int, direcao: str) -> None:
+    """Carta Ponte: liga uma peça sua, por cima de uma peça adversária, a uma casa vazia."""
+    estado.erro = True
+    if "ponte" not in estado.cartas[jogador]:
+        estado.mensagem = "Você já usou a carta Ponte."
+        return
+    if direcao not in DIRECOES:
+        estado.mensagem = "Direção inválida para a Ponte."
+        return
+    if not _dentro(linha, coluna):
+        estado.mensagem = "Casa de origem inválida."
+        return
+    origem = estado.casa(linha, coluna)
+    if origem.tipo != TipoCasa.PECA or origem.dono != jogador:
+        estado.mensagem = "A Ponte precisa sair de uma peça sua."
+        return
+    dl, dc = DIRECOES[direcao]
+    meio = (linha + dl, coluna + dc)
+    destino = (linha + 2 * dl, coluna + 2 * dc)
+    if not _dentro(*meio) or estado.casa(*meio).tipo != TipoCasa.PECA or estado.casa(*meio).dono == jogador:
+        estado.mensagem = "A Ponte precisa passar por cima de uma peça adversária."
+        return
+    if not _dentro(*destino) or estado.casa(*destino).tipo != TipoCasa.VAZIA:
+        estado.mensagem = "O destino da Ponte precisa ser uma casa vazia."
+        return
+    _colocar(estado, destino[0], destino[1], "NESW", jogador)
+    estado.pontes.append((jogador, (linha, coluna), destino))
+    estado.cartas[jogador].discard("ponte")
+    eventos = recalcular(estado)
+    estado.mensagem = " ".join(["Ponte usada: o circuito passou por cima da peça adversária.", *eventos])
     estado.erro = False
