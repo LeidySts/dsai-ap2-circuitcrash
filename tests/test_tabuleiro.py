@@ -138,3 +138,20 @@ def test_ponte_recusa_jogadas_invalidas() -> None:
         assert estado.erro
         assert "ponte" in estado.cartas[0]
         assert not estado.pontes
+
+
+def test_usar_carta_gasta_o_turno() -> None:
+    estado = t.nova_partida()
+    rodada = estado.rodada
+    t.usar_isolante(estado, 0, 2, 0)
+    assert not estado.erro
+    assert estado.rodada == rodada + 1
+
+
+def test_carta_recusada_nao_gasta_o_turno() -> None:
+    estado = t.nova_partida()
+    t.usar_isolante(estado, 0, 2, 0)
+    rodada = estado.rodada
+    t.usar_isolante(estado, 0, 2, 1)
+    assert estado.erro
+    assert estado.rodada == rodada
