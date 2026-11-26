@@ -106,3 +106,18 @@ def resultado_da_demo(
     adversarios = [(RATING_ADVERSARIO_PADRAO, p) for _, j, p in classificacao if j.indice != 0]
     objetivos = sum(1 for linha in estado.casas for casa in linha if casa.capturado_por == 0)
     return resultado_da_partida(jogador, tipo, colocacao, pontos, objetivos, adversarios, ja_ganhas_hoje)
+
+
+class CarteiraFagulhas:
+    """Saldo de Fagulhas de um jogador, respeitando o limite diário."""
+
+    def __init__(self) -> None:
+        self.saldo = 0
+        self.ganho_hoje = 0
+
+    def receber(self, ganho: int) -> int:
+        """Soma o ganho até o limite do dia e devolve o quanto foi recebido."""
+        recebido = aplicar_limite(ganho, self.ganho_hoje)
+        self.saldo += recebido
+        self.ganho_hoje += recebido
+        return recebido
