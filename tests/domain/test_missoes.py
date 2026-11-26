@@ -1,4 +1,4 @@
-from circuitcrash.domain.missoes import Missao, Conquista
+from circuitcrash.domain.missoes import Conquista, Missao
 
 
 def test_missao_avanca_e_conclui():
