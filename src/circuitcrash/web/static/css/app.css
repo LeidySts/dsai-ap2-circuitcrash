@@ -220,6 +220,10 @@ button.casa:focus-visible { outline: 3px solid var(--ambar); outline-offset: 2px
 .peca:focus-visible { outline: 3px solid var(--ambar); outline-offset: 2px; }
 .botoes-jogo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .botoes-jogo form, .botoes-jogo .botao { width: 100%; }
+.titulo-cartas { margin: 12px 0 4px; font-size: 14px; }
+.cartas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cartas select, .cartas input, .cartas .botao { width: 100%; min-height: 36px; }
+.cartas .botao { grid-column: 1 / -1; }
 .historico { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--texto-2); }
 .legenda { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
 .legenda div { display: flex; align-items: center; gap: 10px; }

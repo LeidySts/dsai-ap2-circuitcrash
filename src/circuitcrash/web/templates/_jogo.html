@@ -114,6 +114,8 @@
         <button class="botao" type="submit" {% if estado.terminou %}disabled{% endif %}>Passar a vez</button>
       </form>
     </div>
+    <h3 class="titulo-cartas">Cartas especiais</h3>
+{% if not estado.cartas[0] %}<p class="suave">Você já usou todas as cartas.</p>{% endif %}
     <form class="cartas" method="post" action="/partida/carta" hx-post="/partida/carta">
   <select name="carta" aria-label="Carta">
     {% for nome in ["isolante", "ponte", "curto"] %}

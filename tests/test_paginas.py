@@ -184,3 +184,9 @@ def test_partida_mostra_formulario_de_cartas(cliente: TestClient) -> None:
     resposta = cliente.get("/partida")
     assert resposta.status_code == 200
     assert "Usar carta" in resposta.text
+
+
+def test_formulario_de_cartas_tem_classe_propria(cliente: TestClient) -> None:
+    resposta = cliente.get("/partida")
+    assert 'class="cartas"' in resposta.text
+    assert "Cartas especiais" in resposta.text
