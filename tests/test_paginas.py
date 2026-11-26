@@ -178,3 +178,9 @@ def test_carta_desconhecida_mostra_erro(cliente: TestClient) -> None:
     resposta = cliente.post("/partida/carta", data={"carta": "xyz"})
     assert resposta.status_code == 200
     assert "Carta desconhecida" in resposta.text
+
+
+def test_partida_mostra_formulario_de_cartas(cliente: TestClient) -> None:
+    resposta = cliente.get("/partida")
+    assert resposta.status_code == 200
+    assert "Usar carta" in resposta.text
