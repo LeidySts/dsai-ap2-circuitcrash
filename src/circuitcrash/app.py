@@ -385,6 +385,24 @@ async def acao_passar(request: Request) -> Response:
     return await _responder_jogo(request)
 
 
+async def acao_carta(request: Request) -> Response:
+    form = await request.form()
+    estado = _partida(request)
+    carta = str(form.get("carta", ""))
+    linha = _inteiro(form.get("linha"))
+    coluna = _inteiro(form.get("coluna"))
+    if carta == "isolante":
+        tabuleiro.usar_isolante(estado, 0, linha, coluna)
+    elif carta == "curto":
+        tabuleiro.usar_curto(estado, 0, linha, coluna)
+    elif carta == "ponte":
+        tabuleiro.usar_ponte(estado, 0, linha, coluna, str(form.get("direcao", "")))
+    else:
+        estado.mensagem = "Carta desconhecida."
+        estado.erro = True
+    return await _responder_jogo(request)
+
+
 async def acao_nova(request: Request) -> Response:
     _encerrar_partida(request)
     _partida(request)
@@ -403,6 +421,7 @@ def criar_app(
         Route("/partida/girar-mao", acao_girar_mao, methods=["POST"]),
         Route("/partida/jogar", acao_jogar, methods=["POST"]),
         Route("/partida/passar", acao_passar, methods=["POST"]),
+        Route("/partida/carta", acao_carta, methods=["POST"]),
         Route("/partida/nova", acao_nova, methods=["POST"]),
         Route("/perfil", perfil),
         Route("/loja", pagina_loja),

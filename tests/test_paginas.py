@@ -165,3 +165,22 @@ def test_fim_de_partida_com_banco_persiste(cliente_sql: TestClient, tmp_path: Pa
     assert (veterano.fagulhas, veterano.rating, veterano.partidas) == (335, 1466, 49)
     assert reaberto.partidas_recentes("veterano")[0].quando == "hoje"
     reaberto.fechar()
+
+
+def test_carta_isolante_pela_rota(cliente: TestClient) -> None:
+    dados = {"carta": "isolante", "linha": "2", "coluna": "0"}
+    resposta = cliente.post("/partida/carta", data=dados)
+    assert resposta.status_code == 200
+    assert "Isolante usado" in resposta.text
+
+
+def test_carta_desconhecida_mostra_erro(cliente: TestClient) -> None:
+    resposta = cliente.post("/partida/carta", data={"carta": "xyz"})
+    assert resposta.status_code == 200
+    assert "Carta desconhecida" in resposta.text
+
+
+def test_partida_mostra_formulario_de_cartas(cliente: TestClient) -> None:
+    resposta = cliente.get("/partida")
+    assert resposta.status_code == 200
+    assert "Usar carta" in resposta.text
