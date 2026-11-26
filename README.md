@@ -8,6 +8,17 @@ Puzzle de circuitos por turnos para 4 jogadores, jogado no navegador do computad
 
 Esta versão traz a **interface web completa**: partida de demonstração jogável, perfil, loja de avatares, ranking e regras. Os dados ficam num **banco SQLite** (ou PostgreSQL), ou em memória se nenhum banco for configurado. Quem quiser entra com a **conta Google** e ganha um perfil próprio; sem login, os perfis de demonstração continuam funcionando.
 
+
+## Cartas especiais
+
+Cada jogador tem uma carta de cada tipo por partida, e usar uma carta gasta o turno. Na tela da partida, escolha a carta, informe a linha e a coluna (de 0 a 6) e, no caso da Ponte, a direção.
+
+- Isolante: bloqueia uma casa vazia até o fim da partida.
+- Curto: remove uma peça de adversário que não encosta numa base.
+- Ponte: liga uma peça sua, por cima de uma peça adversária, a uma casa vazia.
+
+Especificação: SPEC/2026-11-24-cartas-especiais.md.
+
 ## Stack
 | Camada | Tecnologia |
 | --- | --- |
