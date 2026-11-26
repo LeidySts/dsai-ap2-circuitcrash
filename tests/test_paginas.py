@@ -190,3 +190,11 @@ def test_formulario_de_cartas_tem_classe_propria(cliente: TestClient) -> None:
     resposta = cliente.get("/partida")
     assert 'class="cartas"' in resposta.text
     assert "Cartas especiais" in resposta.text
+
+
+def test_carta_usada_some_da_lista(cliente: TestClient) -> None:
+    dados = {"carta": "isolante", "linha": "2", "coluna": "0"}
+    cliente.post("/partida/carta", data=dados)
+    resposta = cliente.get("/partida")
+    assert '<option value="isolante">' not in resposta.text
+    assert '<option value="curto">' in resposta.text
