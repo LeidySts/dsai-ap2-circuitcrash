@@ -2,15 +2,14 @@ from datetime import datetime
 
 import pytest
 
-from circuitcrash.dados.memoria import RepositorioMemoria
+from circuitcrash.dados.repositorio import Repositorio
 from circuitcrash.domain.admin import AcaoAdmin
 
 QUANDO = datetime(2026, 11, 27, 12, 0)
 DEPOIS = datetime(2026, 11, 27, 13, 0)
 
 
-def test_ajustar_fagulhas_soma_ao_saldo() -> None:
-    repo = RepositorioMemoria()
+def test_ajustar_fagulhas_soma_ao_saldo(repo: Repositorio) -> None:
     jogador = repo.listar_jogadores()[0]
     antes = jogador.fagulhas
     novo = repo.ajustar_fagulhas("admin", jogador.id, 50, QUANDO)
@@ -18,8 +17,7 @@ def test_ajustar_fagulhas_soma_ao_saldo() -> None:
     assert repo.obter_jogador(jogador.id).fagulhas == antes + 50
 
 
-def test_ajustar_fagulhas_recusa_saldo_negativo() -> None:
-    repo = RepositorioMemoria()
+def test_ajustar_fagulhas_recusa_saldo_negativo(repo: Repositorio) -> None:
     jogador = repo.listar_jogadores()[0]
     antes = jogador.fagulhas
     with pytest.raises(ValueError):
@@ -28,14 +26,12 @@ def test_ajustar_fagulhas_recusa_saldo_negativo() -> None:
     assert repo.acoes_admin() == []
 
 
-def test_ajustar_fagulhas_de_jogador_inexistente() -> None:
-    repo = RepositorioMemoria()
+def test_ajustar_fagulhas_de_jogador_inexistente(repo: Repositorio) -> None:
     with pytest.raises(KeyError):
         repo.ajustar_fagulhas("admin", "nao-existe", 10, QUANDO)
 
 
-def test_acoes_admin_lista_do_mais_recente_para_o_mais_antigo() -> None:
-    repo = RepositorioMemoria()
+def test_acoes_admin_lista_do_mais_recente_para_o_mais_antigo(repo: Repositorio) -> None:
     jogador = repo.listar_jogadores()[0]
     repo.ajustar_fagulhas("admin", jogador.id, 10, QUANDO)
     repo.ajustar_fagulhas("admin", jogador.id, 5, DEPOIS)

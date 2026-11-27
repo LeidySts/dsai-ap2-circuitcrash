@@ -15,6 +15,7 @@ from sqlalchemy.orm import sessionmaker
 
 from circuitcrash.dados.config import normalizar_url
 from circuitcrash.dados.tabelas import (
+    TabelaAcaoAdmin,
     TabelaAvatar,
     TabelaConquista,
     TabelaInventario,
@@ -25,6 +26,7 @@ from circuitcrash.dados.tabelas import (
     TabelaProgressoConquista,
     TabelaProgressoMissao,
 )
+from circuitcrash.domain.admin import AcaoAdmin, ajustar_saldo
 from circuitcrash.domain.modelos import (
     PARTIDAS_PARA_RANKING,
     Avatar,
@@ -124,6 +126,20 @@ class RepositorioSQL:
                 s.add(linha)
             for campo in CAMPOS_JOGADOR:
                 setattr(linha, campo, getattr(jogador, campo))
+
+    def ajustar_fagulhas(self, admin: str, jogador_id: str, valor: int, quando: datetime) -> int:
+        with self._sessao.begin() as s:
+            linha = s.get(TabelaJogador, jogador_id)
+            if linha is None:
+                raise KeyError(jogador_id)
+            linha.fagulhas = ajustar_saldo(linha.fagulhas, valor)
+            s.add(TabelaAcaoAdmin(admin=admin, jogador_id=jogador_id, valor=valor, quando=quando))
+            return linha.fagulhas
+
+    def acoes_admin(self) -> list[AcaoAdmin]:
+        consulta = select(TabelaAcaoAdmin).order_by(TabelaAcaoAdmin.quando.desc(), TabelaAcaoAdmin.id.desc())
+        with self._sessao() as s:
+            return [AcaoAdmin(a.admin, a.jogador_id, a.valor, a.quando) for a in s.scalars(consulta)]
 
     def ranking(self, limite: int = 10) -> list[Jogador]:
         consulta = (

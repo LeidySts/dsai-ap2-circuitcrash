@@ -135,3 +135,13 @@ def _ligar_chaves_estrangeiras(conexao: Any, _registro: Any) -> None:
         cursor = conexao.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
+
+
+class TabelaAcaoAdmin(Base):
+    __tablename__ = "acoes_admin"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    admin: Mapped[str] = mapped_column(String(40))
+    jogador_id: Mapped[str] = mapped_column(ForeignKey("jogadores.id", ondelete="CASCADE"))
+    valor: Mapped[int]
+    quando: Mapped[datetime] = mapped_column(DateTime)
