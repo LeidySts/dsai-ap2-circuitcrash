@@ -14,9 +14,8 @@ from sqlalchemy import create_engine, func, select, update
 from sqlalchemy.orm import sessionmaker
 
 from circuitcrash.dados.config import normalizar_url
-from circuitcrash.dados.tabelas import TabelaAcaoAdmin
-from circuitcrash.domain.admin import AcaoAdmin, ajustar_saldo
 from circuitcrash.dados.tabelas import (
+    TabelaAcaoAdmin,
     TabelaAvatar,
     TabelaConquista,
     TabelaInventario,
@@ -27,6 +26,7 @@ from circuitcrash.dados.tabelas import (
     TabelaProgressoConquista,
     TabelaProgressoMissao,
 )
+from circuitcrash.domain.admin import AcaoAdmin, ajustar_saldo
 from circuitcrash.domain.modelos import (
     PARTIDAS_PARA_RANKING,
     Avatar,
@@ -140,7 +140,7 @@ class RepositorioSQL:
         consulta = select(TabelaAcaoAdmin).order_by(TabelaAcaoAdmin.quando.desc(), TabelaAcaoAdmin.id.desc())
         with self._sessao() as s:
             return [AcaoAdmin(a.admin, a.jogador_id, a.valor, a.quando) for a in s.scalars(consulta)]
-    
+
     def ranking(self, limite: int = 10) -> list[Jogador]:
         consulta = (
             select(TabelaJogador)
