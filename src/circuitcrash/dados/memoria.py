@@ -7,8 +7,10 @@ Tudo é perdido quando o servidor reinicia.
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date
+from dataclasses import replace
+from datetime import date, datetime
 
+from circuitcrash.domain.admin import AcaoAdmin, ajustar_saldo
 from circuitcrash.domain.modelos import (
     Avatar,
     Conquista,
@@ -198,6 +200,7 @@ class RepositorioMemoria:
         self._inventarios = {k: set(v) for k, v in INVENTARIOS.items()}
         self._partidas = {k: list(v) for k, v in PARTIDAS.items()}
         self._contas_google: dict[str, str] = {}  # google_sub -> jogador_id
+        self._acoes_admin: list[AcaoAdmin] = []
 
     def obter_jogador(self, jogador_id: str) -> Jogador | None:
         return self._jogadores.get(jogador_id)
@@ -207,6 +210,16 @@ class RepositorioMemoria:
 
     def salvar_jogador(self, jogador: Jogador) -> None:
         self._jogadores[jogador.id] = jogador
+
+    def ajustar_fagulhas(self, admin: str, jogador_id: str, valor: int, quando: datetime) -> int:
+        jogador = self._jogadores[jogador_id]
+        novo_saldo = ajustar_saldo(jogador.fagulhas, valor)
+        self._jogadores[jogador_id] = replace(jogador, fagulhas=novo_saldo)
+        self._acoes_admin.append(AcaoAdmin(admin, jogador_id, valor, quando))
+        return novo_saldo
+
+    def acoes_admin(self) -> list[AcaoAdmin]:
+        return list(reversed(self._acoes_admin))
 
     def ranking(self, limite: int = 10) -> list[Jogador]:
         elegiveis = [j for j in self._jogadores.values() if not j.provisorio]
