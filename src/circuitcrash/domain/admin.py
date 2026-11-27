@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -21,3 +22,18 @@ class AcaoAdmin:
     jogador: str
     valor: int
     quando: datetime
+
+
+@dataclass(frozen=True)
+class ResumoAdmin:
+    jogadores: int
+    partidas: int
+    fagulhas_em_circulacao: int
+
+
+def resumo(saldos: Sequence[int], total_partidas: int) -> ResumoAdmin:
+    return ResumoAdmin(
+        jogadores=len(saldos),
+        partidas=total_partidas,
+        fagulhas_em_circulacao=sum(saldos),
+    )
