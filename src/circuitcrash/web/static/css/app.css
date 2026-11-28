@@ -252,6 +252,13 @@ button.casa:focus-visible { outline: 3px solid var(--ambar); outline-offset: 2px
 .admin h2 { font-size: 18px; margin-bottom: 12px; }
 .admin .numeros { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .rolagem { overflow-x: auto; }
+.ajuste { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.ajuste label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--suave); }
+.ajuste select, .ajuste input {
+  min-height: 40px; border-radius: 8px; border: 1px solid var(--borda);
+  background: var(--painel); color: var(--texto); font: inherit; font-size: 15px; padding: 0 10px;
+}
+.ajuste .botao { min-height: 40px; }
 .sobe { color: var(--verde); }
 .desce { color: #F9A8D4; }
 .conquistas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: center; font-size: 12px; }

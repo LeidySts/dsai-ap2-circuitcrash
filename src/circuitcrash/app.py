@@ -11,7 +11,7 @@ import os
 import secrets
 import time
 from collections.abc import AsyncIterator
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -199,13 +199,21 @@ async def ranking(request: Request) -> Response:
     )
 
 
+def _eh_admin(request: Request) -> bool:
+    return admin.eh_admin(_jogador(request).apelido, request.app.state.admin_usuario)
+
+
+def _acesso_restrito(request: Request) -> Response:
+    resposta = _render(request, "admin.html", "admin", restrito=True)
+    resposta.status_code = 403
+    return resposta
+
+
 async def painel_admin(request: Request) -> Response:
     """Painel de administração (spec 015). Só o jogador de ADMIN_USUARIO vê o conteúdo."""
     repo = _repo(request)
-    if not admin.eh_admin(_jogador(request).apelido, request.app.state.admin_usuario):
-        resposta = _render(request, "admin.html", "admin", restrito=True)
-        resposta.status_code = 403
-        return resposta
+    if not _eh_admin(request):
+        return _acesso_restrito(request)
     jogadores = sorted(repo.listar_jogadores(), key=lambda j: -j.rating)
     return _render(
         request,
@@ -217,6 +225,25 @@ async def painel_admin(request: Request) -> Response:
         acoes=repo.acoes_admin(),
         apelidos={j.id: j.apelido for j in jogadores},
     )
+
+
+async def ajuste_admin(request: Request) -> Response:
+    """Soma ou subtrai Fagulhas de um jogador (spec 015, FR-003 e FR-005)."""
+    if not _eh_admin(request):
+        return _acesso_restrito(request)
+    repo = _repo(request)
+    form = await request.form()
+    alvo = repo.obter_jogador(str(form.get("jogador_id", "")))
+    try:
+        valor = admin.ler_valor(str(form.get("valor", "")))
+        if alvo is None:
+            raise ValueError("Jogador não encontrado.")
+        novo_saldo = repo.ajustar_fagulhas(_jogador(request).apelido, alvo.id, valor, datetime.now())
+    except ValueError as erro:
+        _avisar(request, False, str(erro))
+    else:
+        _avisar(request, True, f"Fagulhas de {alvo.apelido} ajustadas em {valor:+d}. Novo saldo: {novo_saldo}.")
+    return RedirectResponse("/admin", status_code=303)
 
 
 async def regras(request: Request) -> Response:
@@ -450,6 +477,7 @@ def criar_app(
         Route("/ranking", ranking),
         Route("/regras", regras),
         Route("/admin", painel_admin),
+        Route("/admin/ajuste", ajuste_admin, methods=["POST"]),
         Route("/jogador", trocar_jogador, methods=["POST"]),
         Route("/entrar", entrar),
         Route("/auth/google/retorno", retorno_google, name="retorno_google"),
