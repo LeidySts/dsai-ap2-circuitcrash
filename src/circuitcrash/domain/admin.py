@@ -1,6 +1,20 @@
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
+
+
+def ler_valor(texto: str) -> int:
+    """Valor do ajuste digitado no formulário: inteiro, com ou sem sinal (+50, -40)."""
+    limpo = texto.strip()
+    # Só dígitos ASCII: int() sozinho aceitaria "1_000" e dígitos de outros alfabetos.
+    if not re.fullmatch(r"[+-]?[0-9]+", limpo):
+        raise ValueError("Informe um número inteiro, como 50 ou -20.")
+    valor = int(limpo)
+    if valor == 0:
+        # Um ajuste de 0 não muda o saldo e só sujaria a lista de ações.
+        raise ValueError("O valor do ajuste não pode ser zero.")
+    return valor
 
 
 def ajustar_saldo(saldo_atual: int, valor: int) -> int:

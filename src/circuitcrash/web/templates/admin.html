@@ -17,6 +17,25 @@
     </div>
   </section>
 
+  <section id="admin-ajuste" aria-labelledby="titulo-ajuste">
+    <h2 id="titulo-ajuste">Ajustar Fagulhas</h2>
+    <form class="painel ajuste" method="post" action="/admin/ajuste">
+      <label>
+        <span>Jogador</span>
+        <select name="jogador_id" required>
+          {% for j in jogadores %}
+          <option value="{{ j.id }}">{{ j.apelido }} ({{ j.fagulhas }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Valor (use - para tirar)</span>
+        <input type="number" name="valor" step="1" placeholder="50 ou -20" required>
+      </label>
+      <button class="botao" type="submit">Ajustar</button>
+    </form>
+  </section>
+
   <section id="admin-jogadores" aria-labelledby="titulo-jogadores">
     <h2 id="titulo-jogadores">Jogadores</h2>
     <div class="painel rolagem">

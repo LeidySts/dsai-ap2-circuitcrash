@@ -280,3 +280,104 @@ def test_admin_sem_acoes_avisa_que_a_lista_esta_vazia(cliente_admin: TestClient)
     _entrar_como_admin(cliente_admin)
     acoes = _secao(cliente_admin.get("/admin").text, "admin-acoes")
     assert "Nenhum ajuste ainda" in acoes
+
+
+# ---------- ajuste de saldo pelo painel (spec 015, T007) ----------
+
+
+def _aviso(html: str) -> str:
+    """Texto do aviso de sucesso ou erro mostrado no topo da página."""
+    inicio = html.index('class="aviso')
+    return html[inicio : html.index("</div>", inicio)]
+
+
+def _saldo(repo: Repositorio, jogador_id: str) -> int:
+    jogador = repo.obter_jogador(jogador_id)
+    assert jogador is not None
+    return jogador.fagulhas
+
+
+def test_admin_tem_formulario_de_ajuste(cliente_admin: TestClient) -> None:
+    _entrar_como_admin(cliente_admin)
+    formulario = _secao(cliente_admin.get("/admin").text, "admin-ajuste")
+    assert 'method="post"' in formulario
+    assert 'action="/admin/ajuste"' in formulario
+    assert 'name="jogador_id"' in formulario
+    assert '<option value="kai">' in formulario
+    assert 'name="valor"' in formulario
+
+
+def test_admin_ajuste_soma_ao_saldo_e_registra_a_acao(cliente_admin: TestClient, repo: Repositorio) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "50"}, follow_redirects=False)
+    assert resposta.status_code == 303
+    assert resposta.headers["location"] == "/admin"
+    assert _saldo(repo, "kai") == 90
+    acao = repo.acoes_admin()[0]
+    assert (acao.admin, acao.jogador, acao.valor) == (ADMIN, "kai", 50)
+
+
+def test_admin_ajuste_mostra_mensagem_de_sucesso(cliente_admin: TestClient) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "50"})
+    assert resposta.status_code == 200
+    aviso = _aviso(resposta.text)
+    assert "erro" not in aviso
+    assert "kai_k" in aviso and "+50" in aviso and "90" in aviso
+    assert "+50" in _secao(resposta.text, "admin-acoes")
+
+
+def test_admin_ajuste_negativo_que_cabe_no_saldo(cliente_admin: TestClient, repo: Repositorio) -> None:
+    _entrar_como_admin(cliente_admin)
+    cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "-40"})
+    assert _saldo(repo, "kai") == 0
+
+
+def test_admin_ajuste_que_deixaria_saldo_negativo_e_recusado(cliente_admin: TestClient, repo: Repositorio) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "-41"})
+    aviso = _aviso(resposta.text)
+    assert "erro" in aviso
+    assert "O saldo não pode ficar negativo." in aviso
+    assert _saldo(repo, "kai") == 40
+    assert repo.acoes_admin() == []
+
+
+@pytest.mark.parametrize("valor", ["", "abc", "1.5"])
+def test_admin_ajuste_com_valor_que_nao_e_inteiro_e_recusado(
+    cliente_admin: TestClient, repo: Repositorio, valor: str
+) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": valor})
+    aviso = _aviso(resposta.text)
+    assert "erro" in aviso
+    assert "Informe um número inteiro" in aviso
+    assert _saldo(repo, "kai") == 40
+    assert repo.acoes_admin() == []
+
+
+def test_admin_ajuste_de_valor_zero_e_recusado(cliente_admin: TestClient, repo: Repositorio) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "0"})
+    aviso = _aviso(resposta.text)
+    assert "erro" in aviso
+    assert "O valor do ajuste não pode ser zero." in aviso
+    assert _saldo(repo, "kai") == 40
+    assert repo.acoes_admin() == []
+
+
+def test_admin_ajuste_de_jogador_inexistente_e_recusado(cliente_admin: TestClient, repo: Repositorio) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "nao-existe", "valor": "10"})
+    aviso = _aviso(resposta.text)
+    assert "erro" in aviso
+    assert "Jogador não encontrado" in aviso
+    assert repo.acoes_admin() == []
+
+
+def test_admin_ajuste_por_jogador_comum_e_proibido(cliente_admin: TestClient, repo: Repositorio) -> None:
+    resposta = cliente_admin.post("/admin/ajuste", data={"jogador_id": "kai", "valor": "50"}, follow_redirects=False)
+    assert resposta.status_code == 403
+    assert "Acesso restrito" in resposta.text
+    assert _saldo(repo, "kai") == 40
+    assert repo.acoes_admin() == []
