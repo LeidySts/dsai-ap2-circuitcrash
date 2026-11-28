@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block titulo %}Administração · CircuitCrash{% endblock %}
+{% block conteudo %}
+<div class="admin">
+  {% if restrito %}
+  <h1>Acesso restrito</h1>
+  <p class="suave">Esta página é só para quem administra o CircuitCrash.</p>
+  {% else %}
+  <h1>Painel de administração</h1>
+
+  <section id="admin-resumo" aria-labelledby="titulo-resumo">
+    <h2 id="titulo-resumo">Números do jogo</h2>
+    <div class="numeros">
+      <div class="numero"><span>Jogadores</span><span class="mono">{{ resumo.jogadores }}</span></div>
+      <div class="numero"><span>Partidas</span><span class="mono">{{ resumo.partidas }}</span></div>
+      <div class="numero"><span>Fagulhas em circulação</span><span class="mono">{{ resumo.fagulhas_em_circulacao }}</span></div>
+    </div>
+  </section>
+
+  <section id="admin-jogadores" aria-labelledby="titulo-jogadores">
+    <h2 id="titulo-jogadores">Jogadores</h2>
+    <div class="painel rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Jogador</th><th scope="col">Rating</th><th scope="col">Fagulhas</th></tr></thead>
+        <tbody>
+          {% for j in jogadores %}
+          <tr>
+            <td>{{ j.apelido }}</td>
+            <td class="mono">{{ j.rating }}</td>
+            <td class="mono">{{ j.fagulhas }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="admin-acoes" aria-labelledby="titulo-acoes">
+    <h2 id="titulo-acoes">Ajustes de saldo</h2>
+    {% if acoes %}
+    <div class="painel rolagem">
+      <table class="tabela">
+        <thead><tr><th scope="col">Quando</th><th scope="col">Quem</th><th scope="col">Jogador</th><th scope="col">Valor</th></tr></thead>
+        <tbody>
+          {% for a in acoes %}
+          <tr>
+            <td>{{ a.quando.strftime("%d/%m/%Y %H:%M") }}</td>
+            <td>{{ a.admin }}</td>
+            <td>{{ apelidos.get(a.jogador, a.jogador) }}</td>
+            <td class="mono">{{ "%+d" % a.valor }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="suave">Nenhum ajuste ainda.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

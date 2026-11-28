@@ -27,7 +27,7 @@ from starlette.templating import Jinja2Templates
 from circuitcrash.dados.config import url_do_banco
 from circuitcrash.dados.fabrica import criar_repositorio
 from circuitcrash.dados.repositorio import Repositorio
-from circuitcrash.domain import conta, economia, loja, tabuleiro
+from circuitcrash.domain import admin, conta, economia, loja, tabuleiro
 from circuitcrash.domain.economia import LIMITE_DIARIO_FAGULHAS, RECOMPENSA_COLOCACAO
 from circuitcrash.domain.modelos import PRECOS, Jogador, Raridade, ResultadoPartida
 from circuitcrash.login import google
@@ -196,6 +196,26 @@ async def ranking(request: Request) -> Response:
         "ranking",
         jogadores=repo.ranking(50),
         avatares={a.id: a for a in repo.listar_avatares()},
+    )
+
+
+async def painel_admin(request: Request) -> Response:
+    """Painel de administração (spec 015). Só o jogador de ADMIN_USUARIO vê o conteúdo."""
+    repo = _repo(request)
+    if not admin.eh_admin(_jogador(request).apelido, request.app.state.admin_usuario):
+        resposta = _render(request, "admin.html", "admin", restrito=True)
+        resposta.status_code = 403
+        return resposta
+    jogadores = sorted(repo.listar_jogadores(), key=lambda j: -j.rating)
+    return _render(
+        request,
+        "admin.html",
+        "admin",
+        restrito=False,
+        resumo=admin.resumo([j.fagulhas for j in jogadores], repo.total_partidas()),
+        jogadores=jogadores,
+        acoes=repo.acoes_admin(),
+        apelidos={j.id: j.apelido for j in jogadores},
     )
 
 
@@ -429,6 +449,7 @@ def criar_app(
         Route("/loja/usar", usar, methods=["POST"]),
         Route("/ranking", ranking),
         Route("/regras", regras),
+        Route("/admin", painel_admin),
         Route("/jogador", trocar_jogador, methods=["POST"]),
         Route("/entrar", entrar),
         Route("/auth/google/retorno", retorno_google, name="retorno_google"),
@@ -459,6 +480,8 @@ def criar_app(
     # Sem configuração passada: GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET; vazias, o login fica desligado.
     app.state.google = google_config or google.ConfigGoogle.do_ambiente()
     app.state.trocar_codigo = trocar_codigo or google.trocar_codigo
+    # Painel /admin (spec 015): apelido do administrador; vazia, ninguém entra.
+    app.state.admin_usuario = os.environ.get("ADMIN_USUARIO")
     return app
 
 

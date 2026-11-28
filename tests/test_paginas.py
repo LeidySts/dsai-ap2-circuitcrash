@@ -1,5 +1,6 @@
 import re
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from circuitcrash.app import criar_app
+from circuitcrash.dados.repositorio import Repositorio
 from circuitcrash.dados.sql import RepositorioSQL
 from conftest import HOJE, criar_repo_sql, url_sqlite
 
@@ -198,3 +200,83 @@ def test_carta_usada_some_da_lista(cliente: TestClient) -> None:
     resposta = cliente.get("/partida")
     assert '<option value="isolante">' not in resposta.text
     assert '<option value="curto">' in resposta.text
+
+
+# ---------- painel de administração (spec 015, T006) ----------
+
+# Apelido do jogador "novato". A rota /jogador só troca para os dois perfis de demonstração
+# (veterano e novato); o visitante padrão (veterano, voltz_br) é um jogador comum.
+ADMIN = "luma_dev"
+
+
+@pytest.fixture
+def cliente_admin(repo: Repositorio, monkeypatch: pytest.MonkeyPatch) -> TestClient:
+    """Cliente com ADMIN_USUARIO configurado, rodando na memória e no SQL."""
+    monkeypatch.setenv("ADMIN_USUARIO", ADMIN)
+    return TestClient(criar_app(repo))
+
+
+def _entrar_como_admin(cliente: TestClient) -> None:
+    cliente.post("/jogador", data={"jogador_id": "novato"})
+
+
+def _secao(html: str, secao_id: str) -> str:
+    """Trecho da página entre <section id="..."> e o </section> seguinte."""
+    inicio = html.index(f'id="{secao_id}"')
+    return html[inicio : html.index("</section>", inicio)]
+
+
+def test_admin_jogador_comum_ve_acesso_restrito(cliente_admin: TestClient) -> None:
+    resposta = cliente_admin.get("/admin")
+    assert resposta.status_code == 403
+    assert "Acesso restrito" in resposta.text
+    assert 'id="admin-resumo"' not in resposta.text
+    assert 'id="admin-jogadores"' not in resposta.text
+    assert 'id="admin-acoes"' not in resposta.text
+
+
+def test_admin_sem_admin_configurado_ninguem_entra(repo: Repositorio, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ADMIN_USUARIO", raising=False)
+    cliente = TestClient(criar_app(repo))
+    _entrar_como_admin(cliente)
+    resposta = cliente.get("/admin")
+    assert resposta.status_code == 403
+    assert "Acesso restrito" in resposta.text
+
+
+def test_admin_ve_os_numeros_do_jogo(cliente_admin: TestClient) -> None:
+    _entrar_como_admin(cliente_admin)
+    resposta = cliente_admin.get("/admin")
+    assert resposta.status_code == 200
+    assert "Acesso restrito" not in resposta.text
+    resumo = _secao(resposta.text, "admin-resumo")
+    assert "Jogadores" in resumo and ">6<" in resumo
+    assert "Partidas" in resumo and ">7<" in resumo
+    assert "Fagulhas em circulação" in resumo and ">3030<" in resumo
+
+
+def test_admin_lista_jogadores_do_maior_rating_para_o_menor(cliente_admin: TestClient) -> None:
+    _entrar_como_admin(cliente_admin)
+    lista = _secao(cliente_admin.get("/admin").text, "admin-jogadores")
+    ordem = ["ninacircuit", "lia.ohm", "voltz_br", "brunovolt", "kai_k", "luma_dev"]
+    posicoes = [lista.index(apelido) for apelido in ordem]
+    assert posicoes == sorted(posicoes)
+    # Nome, rating e saldo de Fagulhas de cada jogador (aqui, a primeira).
+    linha_nina = lista[posicoes[0] : posicoes[1]]
+    assert "1611" in linha_nina and "1500" in linha_nina
+
+
+def test_admin_mostra_as_acoes_de_ajuste(cliente_admin: TestClient, repo: Repositorio) -> None:
+    repo.ajustar_fagulhas(ADMIN, "kai", 50, datetime(2026, 11, 27, 12, 0))
+    _entrar_como_admin(cliente_admin)
+    acoes = _secao(cliente_admin.get("/admin").text, "admin-acoes")
+    assert ADMIN in acoes
+    assert "kai" in acoes
+    assert "+50" in acoes
+    assert "27/11/2026 12:00" in acoes
+
+
+def test_admin_sem_acoes_avisa_que_a_lista_esta_vazia(cliente_admin: TestClient) -> None:
+    _entrar_como_admin(cliente_admin)
+    acoes = _secao(cliente_admin.get("/admin").text, "admin-acoes")
+    assert "Nenhum ajuste ainda" in acoes

@@ -247,6 +247,11 @@ button.casa:focus-visible { outline: 3px solid var(--ambar); outline-offset: 2px
 .tabela { width: 100%; border-collapse: collapse; font-size: 15px; }
 .tabela th { text-align: left; font-weight: 500; font-size: 13px; color: var(--suave); padding: 8px 8px 8px 0; }
 .tabela td { padding: 12px 8px 12px 0; border-top: 1px solid var(--borda); }
+/* Painel de administração (spec 015): seções empilhadas; tabelas rolam de lado em telas estreitas. */
+.admin { max-width: 820px; display: flex; flex-direction: column; gap: 24px; }
+.admin h2 { font-size: 18px; margin-bottom: 12px; }
+.admin .numeros { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.rolagem { overflow-x: auto; }
 .sobe { color: var(--verde); }
 .desce { color: #F9A8D4; }
 .conquistas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; text-align: center; font-size: 12px; }
