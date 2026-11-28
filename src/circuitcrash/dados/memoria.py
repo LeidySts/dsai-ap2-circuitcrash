@@ -221,6 +221,10 @@ class RepositorioMemoria:
     def acoes_admin(self) -> list[AcaoAdmin]:
         return list(reversed(self._acoes_admin))
 
+    def total_partidas(self) -> int:
+        # Na memória, cada partida gravada é um ResumoPartida na lista de um jogador.
+        return sum(len(resumos) for resumos in self._partidas.values())
+
     def ranking(self, limite: int = 10) -> list[Jogador]:
         elegiveis = [j for j in self._jogadores.values() if not j.provisorio]
         return sorted(elegiveis, key=lambda j: -j.rating)[:limite]
