@@ -7,8 +7,10 @@ deve seguir exatamente estes métodos. Detalhes em docs/banco-de-dados.md.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
+from circuitcrash.domain.admin import AcaoAdmin
 from circuitcrash.domain.modelos import Avatar, Conquista, Jogador, Missao, ResultadoPartida, ResumoPartida
 
 
@@ -71,4 +73,17 @@ class Repositorio(Protocol):
 
         Devolve False se o jogador não existe ou já está ligado a outra conta.
         """
+        ...
+
+    # Painel de administração (spec 015)
+    def ajustar_fagulhas(self, admin: str, jogador_id: str, valor: int, quando: datetime) -> int:
+        """Soma valor (pode ser negativo) ao saldo e registra a ação, tudo ou nada.
+
+        Devolve o novo saldo. Levanta ValueError se o saldo ficaria negativo e
+        KeyError se o jogador não existe; nos dois casos nada é gravado.
+        """
+        ...
+
+    def acoes_admin(self) -> list[AcaoAdmin]:
+        """Ajustes de saldo feitos pelo administrador, do mais recente para o mais antigo."""
         ...
