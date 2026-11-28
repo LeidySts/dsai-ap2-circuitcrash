@@ -87,3 +87,7 @@ class Repositorio(Protocol):
     def acoes_admin(self) -> list[AcaoAdmin]:
         """Ajustes de saldo feitos pelo administrador, do mais recente para o mais antigo."""
         ...
+
+    def total_partidas(self) -> int:
+        """Quantas partidas foram gravadas no jogo (não a soma de Jogador.partidas)."""
+        ...

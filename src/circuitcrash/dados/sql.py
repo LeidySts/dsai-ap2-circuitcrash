@@ -141,6 +141,10 @@ class RepositorioSQL:
         with self._sessao() as s:
             return [AcaoAdmin(a.admin, a.jogador_id, a.valor, a.quando) for a in s.scalars(consulta)]
 
+    def total_partidas(self) -> int:
+        with self._sessao() as s:
+            return s.scalar(select(func.count()).select_from(TabelaPartida)) or 0
+
     def ranking(self, limite: int = 10) -> list[Jogador]:
         consulta = (
             select(TabelaJogador)
